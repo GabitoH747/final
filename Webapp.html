@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Neon Clicker 2077</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@500&display=swap');
+
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: 'Orbitron', sans-serif;
+      text-align: center;
+      background: linear-gradient(135deg, #0f0f0f, #1a1a1a);
+      color: #f1f1f1;
+      overflow: hidden;
+    }
+
+    h1 {
+      color: #fcee09;
+      font-size: 3em;
+      margin-top: 10px;
+      text-shadow: 0 0 10px #fcee09, 0 0 20px #fcee09;
+    }
+
+    #instructions {
+      margin: 10px auto;
+      font-size: 1em;
+      color: #ccc;
+      width: 90%;
+      max-width: 800px;
+      line-height: 1.5;
+    }
+
+    #game-area {
+      position: relative;
+      width: 90%;
+      height: 500px;
+      margin: 20px auto;
+      background: radial-gradient(#111, #000);
+      border: 2px solid #ff00ff;
+      border-radius: 10px;
+      overflow: hidden;
+      box-shadow: 0 0 15px #ff00ff, 0 0 30px #00eaff;
+    }
+
+    .circle, .spiked {
+      position: absolute;
+      width: 50px;
+      height: 50px;
+      border-radius: 50%;
+      cursor: pointer;
+      transition: transform 0.1s ease-in-out;
+    }
+
+    .circle {
+      background: #00eaff;
+      box-shadow: 0 0 20px #00eaff, 0 0 40px #00eaff;
+    }
+
+    .circle:hover, .spiked:hover {
+      transform: scale(1.2);
+    }
+
+    .spiked {
+      background: #ff00ff;
+      box-shadow: 0 0 20px #ff00ff, 0 0 40px #ff00ff;
+    }
+
+    .spiked::before {
+      content: "✴";
+      font-size: 40px;
+      color: #fff;
+      position: absolute;
+      top: -4px;
+      left: 6px;
+    }
+
+    #scoreboard {
+      font-size: 1.2em;
+      color: #ff00ff;
+      text-shadow: 0 0 5px #ff00ff;
+    }
+
+    #start-btn {
+      padding: 10px 20px;
+      font-size: 1em;
+      background: #fcee09;
+      color: #000;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      font-family: 'Orbitron', sans-serif;
+      box-shadow: 0 0 10px #fcee09, 0 0 20px #fcee09;
+      transition: background 0.3s;
+    }
+
+    #start-btn:hover {
+      background: #fff200;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>Neon Clicker 2077</h1>
+  <div id="instructions">
+    <strong>HOW TO PLAY:</strong><br>
+    Click on the <span style="color:#00eaff">blue neon circles</span> to score points (+1).<br>
+    Avoid the <span style="color:#ff00ff">spiked magenta balls</span> — they’re traps! (-2 points).<br>
+    Blue circles disappear in 2 seconds, so be fast!<br>
+    Game lasts 30 seconds. Hack the high score!
+  </div>
+  <div id="scoreboard">Score: 0 | Time left: 30s</div>
+  <button id="start-btn">Start Hack</button>
+  <div id="game-area"></div>
+
+  <script>
+    const gameArea = document.getElementById('game-area');
+    const scoreDisplay = document.getElementById('scoreboard');
+    const startButton = document.getElementById('start-btn');
+
+    let score = 0;
+    let timeLeft = 30;
+    let timerInterval;
+    let circleInterval;
+
+    function getRandomPosition() {
+      const areaRect = gameArea.getBoundingClientRect();
+      const x = Math.floor(Math.random() * (areaRect.width - 50));
+      const y = Math.floor(Math.random() * (areaRect.height - 50));
+      return { x, y };
+    }
+
+    function spawnCircle() {
+      const circle = document.createElement('div');
+      circle.classList.add('circle');
+      const { x, y } = getRandomPosition();
+      circle.style.left = `${x}px`;
+      circle.style.top = `${y}px`;
+
+      circle.addEventListener('click', () => {
+        score++;
+        updateScoreboard();
+        circle.remove();
+        maybeSpawnSpikedBall();
+      });
+
+      gameArea.appendChild(circle);
+
+      setTimeout(() => {
+        if (circle.parentElement) {
+          circle.remove();
+        }
+      }, 2000);
+    }
+
+    function spawnSpikedBall() {
+      const spike = document.createElement('div');
+      spike.classList.add('spiked');
+      const { x, y } = getRandomPosition();
+      spike.style.left = `${x}px`;
+      spike.style.top = `${y}px`;
+
+      spike.addEventListener('click', () => {
+        score -= 2;
+        updateScoreboard();
+        spike.remove();
+      });
+
+      gameArea.appendChild(spike);
+
+      setTimeout(() => {
+        if (spike.parentElement) {
+          spike.remove();
+        }
+      }, 3000);
+    }
+
+    function maybeSpawnSpikedBall() {
+      if (Math.random() < 0.4) {
+        spawnSpikedBall();
+      }
+    }
+
+    function updateScoreboard() {
+      scoreDisplay.textContent = `Score: ${score} | Time left: ${timeLeft}s`;
+    }
+
+    function startGame() {
+      score = 0;
+      timeLeft = 30;
+      gameArea.innerHTML = '';
+      updateScoreboard();
+
+      circleInterval = setInterval(() => {
+        // spawn 2–3 circles each interval
+        const count = Math.floor(Math.random() * 2) + 2;
+        for (let i = 0; i < count; i++) {
+          spawnCircle();
+        }
+      }, 800);
+
+      timerInterval = setInterval(() => {
+        timeLeft--;
+        updateScoreboard();
+        if (timeLeft <= 0) {
+          clearInterval(timerInterval);
+          clearInterval(circleInterval);
+          gameArea.innerHTML = '';
+          alert(`SYSTEM OVERRIDE COMPLETE\nFinal Score: ${score}`);
+        }
+      }, 1000);
+    }
+
+    startButton.addEventListener('click', () => {
+      clearInterval(timerInterval);
+      clearInterval(circleInterval);
+      startGame();
+    });
+  </script>
+
+</body>
+</html>
